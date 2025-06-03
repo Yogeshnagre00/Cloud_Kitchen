@@ -7,28 +7,47 @@ const router = express.Router();
 
 // Signup route
 router.post("/signup", async (req, res) => {
-  const { name, email, password } = req.body;
+  const { name, email, mobile, password } = req.body;
+
+  if (!name || !email || !mobile || !password) {
+    return res.status(400).json({ error: "All fields are required" });
+  }
 
   try {
-    // Check if user exists
-    const existingUser = await db.query("SELECT * FROM users WHERE email = $1", [email]);
-    if (existingUser.rows.length > 0) {
-      return res.status(400).json({ error: "User already exists" });
+    const existing = await db.query(
+      "SELECT * FROM users WHERE email = $1 OR mobile = $2",
+      [email, mobile]
+    );
+
+    if (existing.rows.length > 0) {
+      const existingUser = existing.rows[0];
+      if (existingUser.email === email && existingUser.mobile === mobile) {
+        return res
+          .status(409)
+          .json({ error: "Email and Mobile already registered" });
+      } else if (existingUser.email === email) {
+        return res.status(409).json({ error: "Email already registered" });
+      } else {
+        return res
+          .status(409)
+          .json({ error: "Mobile number already registered" });
+      }
     }
 
-    // Hash password and insert new user
     const hashedPassword = await bcrypt.hash(password, 10);
     const result = await db.query(
-      "INSERT INTO users (name, email, password) VALUES ($1, $2, $3) RETURNING id, name, email",
-      [name, email, hashedPassword]
+      "INSERT INTO users (name, email, mobile, password) VALUES ($1, $2, $3, $4) RETURNING id, name, email, mobile",
+      [name, email, mobile, hashedPassword]
     );
 
     const user = result.rows[0];
-
-    // Generate JWT token
-    const token = jwt.sign({ id: user.id, email: user.email }, process.env.JWT_SECRET, {
-      expiresIn: "1h",
-    });
+    const token = jwt.sign(
+      { id: user.id, email: user.email },
+      process.env.JWT_SECRET,
+      {
+        expiresIn: "1h",
+      }
+    );
 
     res.json({ token, user });
   } catch (err) {
@@ -37,24 +56,38 @@ router.post("/signup", async (req, res) => {
   }
 });
 
-// Login route
+// Login route (with mobile instead of email)
 router.post("/login", async (req, res) => {
-  const { email, password } = req.body;
+  const { mobile, password } = req.body;
 
   try {
-    const result = await db.query("SELECT * FROM users WHERE email = $1", [email]);
+    const result = await db.query("SELECT * FROM users WHERE mobile = $1", [
+      mobile,
+    ]);
     const user = result.rows[0];
+
     if (!user) return res.status(401).json({ error: "Invalid credentials" });
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) return res.status(401).json({ error: "Invalid credentials" });
 
-    // Generate JWT token
-    const token = jwt.sign({ id: user.id, email: user.email }, process.env.JWT_SECRET, {
-      expiresIn: "1h",
-    });
+    const token = jwt.sign(
+      { id: user.id, mobile: user.mobile },
+      process.env.JWT_SECRET,
+      {
+        expiresIn: "1h",
+      }
+    );
 
-    res.json({ token, user: { id: user.id, name: user.name, email: user.email } });
+    res.json({
+      token,
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        mobile: user.mobile,
+      },
+    });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Login failed" });

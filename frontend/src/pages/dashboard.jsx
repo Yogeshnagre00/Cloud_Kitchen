@@ -11,10 +11,12 @@ import {
 } from "@mui/material";
 import Header from "../components/header";
 import "./Dashboard.css";
+import { useNavigate } from "react-router-dom";
 
 const Dashboard = () => {
   const [products, setProducts] = useState([]);
   const [quantities, setQuantities] = useState({});
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetch("http://localhost:5000/api/products")
@@ -22,7 +24,6 @@ const Dashboard = () => {
       .then((data) => setProducts(data))
       .catch((error) => console.error("Error fetching products:", error));
   }, []);
-
   const increaseQuantity = (id) => {
     setQuantities((prev) => ({ ...prev, [id]: (prev[id] || 0) + 1 }));
   };
@@ -33,6 +34,7 @@ const Dashboard = () => {
       if (updated[id] === 0) delete updated[id];
       return updated;
     });
+    
   };
 
   const totalItems = Object.values(quantities).reduce((a, b) => a + b, 0);
@@ -40,7 +42,14 @@ const Dashboard = () => {
     const qty = quantities[product.id] || 0;
     return acc + product.price * qty;
   }, 0);
-
+const handleViewCart = () => {
+  navigate("/view-cart", {
+    state: {
+      cartItems: quantities,
+      products: products,
+    },
+  });
+};
   return (
     <>
       <Box className="dashboard-container">
@@ -98,9 +107,9 @@ const Dashboard = () => {
           <Typography>
             {totalItems} item(s) | ₹{totalPrice}
           </Typography>
-          <Button variant="contained" color="success">
-            View Cart
-          </Button>
+          <Button variant="contained" color="success" onClick={handleViewCart}>
+  View Cart
+</Button>
         </Box>
       )}
     </>

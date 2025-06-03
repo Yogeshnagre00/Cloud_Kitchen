@@ -1,15 +1,20 @@
+import {
+  Box,
+  Button,
+  CircularProgress,
+  TextField,
+  Typography,
+} from "@mui/material";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Box, TextField, Button, Typography, CircularProgress } from "@mui/material";
 import useAuth from "../hooks/useAuth";
 
-
 export default function Signup() {
-  const [form, setForm] = useState({ 
-    name: "", 
-    email: "", 
+  const [form, setForm] = useState({
+    name: "",
+    email: "",
     password: "",
-    mobile: ""
+    mobile: "",
   });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -22,22 +27,22 @@ export default function Signup() {
     setLoading(true);
 
     try {
-      const res = await fetch("http://localhost:5000/signup", {
+      const res = await fetch("http://localhost:5000/api/auth/signup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),
       });
 
       const data = await res.json();
-      
+
       if (!res.ok) throw new Error(data.error || "Signup failed");
 
       login(data.token, {
         name: data.name,
         email: data.email,
-        mobile: data.mobile
+        mobile: data.mobile,
       });
-      
+
       navigate("/dashboard");
     } catch (err) {
       setError(err.message);
@@ -58,7 +63,7 @@ export default function Signup() {
         <Typography variant="h4" align="center" gutterBottom>
           Create Account
         </Typography>
-        
+
         <form onSubmit={handleSubmit}>
           <TextField
             fullWidth
@@ -66,10 +71,10 @@ export default function Signup() {
             label="Full Name"
             name="name"
             value={form.name}
-            onChange={(e) => setForm({...form, name: e.target.value})}
+            onChange={(e) => setForm({ ...form, name: e.target.value })}
             required
           />
-          
+
           <TextField
             fullWidth
             margin="normal"
@@ -77,10 +82,10 @@ export default function Signup() {
             name="email"
             type="email"
             value={form.email}
-            onChange={(e) => setForm({...form, email: e.target.value})}
+            onChange={(e) => setForm({ ...form, email: e.target.value })}
             required
           />
-          
+
           <TextField
             fullWidth
             margin="normal"
@@ -88,10 +93,10 @@ export default function Signup() {
             name="mobile"
             type="tel"
             value={form.mobile}
-            onChange={(e) => setForm({...form, mobile: e.target.value})}
+            onChange={(e) => setForm({ ...form, mobile: e.target.value })}
             required
           />
-          
+
           <TextField
             fullWidth
             margin="normal"
@@ -99,10 +104,10 @@ export default function Signup() {
             name="password"
             type="password"
             value={form.password}
-            onChange={(e) => setForm({...form, password: e.target.value})}
+            onChange={(e) => setForm({ ...form, password: e.target.value })}
             required
           />
-          
+
           <Button
             type="submit"
             fullWidth
@@ -113,7 +118,7 @@ export default function Signup() {
           >
             {loading ? <CircularProgress size={24} /> : "Sign Up"}
           </Button>
-          
+
           {error && (
             <Typography color="error" align="center" sx={{ mt: 2 }}>
               {error}
