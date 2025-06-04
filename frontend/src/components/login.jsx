@@ -23,7 +23,7 @@ export default function Login() {
     setLoading(true);
 
     try {
-      const res = await fetch("http://localhost:5000/login", {
+      const res = await fetch("http://localhost:5000/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         // Send mobile and password instead of email
@@ -35,10 +35,9 @@ export default function Login() {
       if (!res.ok) throw new Error(data.error || "Login failed");
 
       login(data.token, {
-        name: data.user.name, // note: backend returns user object under data.user
+        name: data.user.name, 
         email: data.user.email,
         mobile: data.user.mobile,
-        // avatar: data.user.avatar // if you have avatar in backend
       });
 
       navigate("/dashboard");
@@ -50,61 +49,78 @@ export default function Login() {
   };
 
   return (
-    <Box width="100%" maxWidth={400}>
-      <Typography variant="h4" align="center" gutterBottom>
-        Login
-      </Typography>
-
-      <form onSubmit={handleSubmit}>
-        <TextField
-          fullWidth
-          margin="normal"
-          label="Mobile Number"
-          name="mobile"
-          type="tel"
-          value={form.mobile}
-          onChange={(e) => setForm({ ...form, mobile: e.target.value })}
-          required
-          autoComplete="tel"
-        />
-
-        <TextField
-          fullWidth
-          margin="normal"
-          label="Password"
-          name="password"
-          type="password"
-          value={form.password}
-          onChange={(e) => setForm({ ...form, password: e.target.value })}
-          required
-          autoComplete="current-password"
-        />
-
-        <Button
-          type="submit"
-          fullWidth
-          variant="contained"
-          color="primary"
-          disabled={loading}
-          sx={{ mt: 3, height: 48 }}
-        >
-          {loading ? <CircularProgress size={24} /> : "Login"}
-        </Button>
-      </form>
-
-      {/* Signup link below */}
-      <Typography align="center" sx={{ mt: 2 }}>
-        Not registered?{" "}
-        <Link to="/signup" style={{ textDecoration: "none", color: "#1976d2" }}>
-          Signup
-        </Link>
-      </Typography>
-
-      {error && (
-        <Typography color="error" align="center" sx={{ mt: 2 }}>
-          {error}
+    <Box
+      display="flex"
+      justifyContent="center"
+      alignItems="center"
+      height="100vh"
+      px={2}
+    >
+      <Box
+        width="100%"
+        maxWidth={400}
+        p={4}
+        bgcolor="white"
+        borderRadius={2}
+        boxShadow={3}
+      >
+        <Typography variant="h4" align="center" gutterBottom>
+          Login
         </Typography>
-      )}
+
+        <form onSubmit={handleSubmit}>
+          <TextField
+            fullWidth
+            margin="normal"
+            label="Mobile Number"
+            name="mobile"
+            type="tel"
+            value={form.mobile}
+            onChange={(e) => setForm({ ...form, mobile: e.target.value })}
+            required
+            autoComplete="tel"
+          />
+
+          <TextField
+            fullWidth
+            margin="normal"
+            label="Password"
+            name="password"
+            type="password"
+            value={form.password}
+            onChange={(e) => setForm({ ...form, password: e.target.value })}
+            required
+            autoComplete="current-password"
+          />
+
+          <Button
+            type="submit"
+            fullWidth
+            variant="contained"
+            color="primary"
+            disabled={loading}
+            sx={{ mt: 3, height: 48 }}
+          >
+            {loading ? <CircularProgress size={24} /> : "Login"}
+          </Button>
+        </form>
+
+        <Typography align="center" sx={{ mt: 2 }}>
+          Not registered?{" "}
+          <Link
+            to="/signup"
+            style={{ textDecoration: "none", color: "#1976d2" }}
+          >
+            Signup
+          </Link>
+        </Typography>
+
+        {error && (
+          <Typography color="error" align="center" sx={{ mt: 2 }}>
+            {error}
+          </Typography>
+        )}
+      </Box>
     </Box>
   );
 }

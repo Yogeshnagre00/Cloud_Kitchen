@@ -9,7 +9,7 @@ import {
   CardActions,
   Button,
 } from "@mui/material";
-import Header from "../components/header";
+import Header from "../../components/header";
 import "./Dashboard.css";
 import { useNavigate } from "react-router-dom";
 

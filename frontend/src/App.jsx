@@ -5,8 +5,9 @@ import Login from "./components/login";
 import Profile from "./components/pfofile";
 import Signup from "./components/signup";
 import { AuthProvider } from "./context/AuthContext";
-import Dashboard from "./pages/dashboard";
-import ViewCart from "./pages/ViewCart";
+import Dashboard from "./pages/dashboardPage/dashboard";
+import ViewCart from "./pages/viewCartPage/ViewCart";
+import AdminOrders from "./pages/adminOrdersPage/adminOrder";
 
 function App() {
   return (
@@ -20,6 +21,7 @@ function App() {
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/" element={<Dashboard />} />
           <Route path="/view-cart" element={<ViewCart />} />
+          <Route path="/admin/orders" element={<AdminOrders />} />
         </Routes>
         <Footer />
       </Router>

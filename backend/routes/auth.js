@@ -5,11 +5,13 @@ const db = require("../db"); // adjust path if needed
 
 const router = express.Router();
 
+
+
 // Signup route
 router.post("/signup", async (req, res) => {
-  const { name, email, mobile, password } = req.body;
+  const { name, email, mobile, password, address } = req.body;
 
-  if (!name || !email || !mobile || !password) {
+  if (!name || !email || !mobile || !password || !address) {
     return res.status(400).json({ error: "All fields are required" });
   }
 
@@ -36,25 +38,24 @@ router.post("/signup", async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(password, 10);
     const result = await db.query(
-      "INSERT INTO users (name, email, mobile, password) VALUES ($1, $2, $3, $4) RETURNING id, name, email, mobile",
-      [name, email, mobile, hashedPassword]
+      "INSERT INTO users (name, email, mobile, password, address) VALUES ($1, $2, $3, $4, $5) RETURNING id, name, email, mobile, address",
+      [name, email, mobile, hashedPassword, address]
     );
 
     const user = result.rows[0];
     const token = jwt.sign(
       { id: user.id, email: user.email },
       process.env.JWT_SECRET,
-      {
-        expiresIn: "1h",
-      }
+      { expiresIn: "1h" }
     );
 
-    res.json({ token, user });
+    res.json({ token, ...user });
   } catch (err) {
-    console.error(err);
+    console.error("Signup Error:", err);
     res.status(500).json({ error: "Signup failed" });
   }
 });
+
 
 // Login route (with mobile instead of email)
 router.post("/login", async (req, res) => {

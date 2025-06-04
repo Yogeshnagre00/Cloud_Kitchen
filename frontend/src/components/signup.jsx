@@ -14,7 +14,9 @@ export default function Signup() {
     name: "",
     email: "",
     password: "",
+    confirmPassword: "",  // added confirmPassword field
     mobile: "",
+    address: "",
   });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -24,13 +26,23 @@ export default function Signup() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+
+    // Client-side validation for password match
+    if (form.password !== form.confirmPassword) {
+      setError("Passwords do not match");
+      return;
+    }
+
     setLoading(true);
 
     try {
+      const { confirmPassword: _confirmPassword, ...submitData } = form;
+
+
       const res = await fetch("http://localhost:5000/api/auth/signup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+        body: JSON.stringify(submitData),  // send without confirmPassword
       });
 
       const data = await res.json();
@@ -41,6 +53,7 @@ export default function Signup() {
         name: data.name,
         email: data.email,
         mobile: data.mobile,
+        address: data.address,
       });
 
       navigate("/dashboard");
@@ -56,10 +69,17 @@ export default function Signup() {
       display="flex"
       justifyContent="center"
       alignItems="center"
-      minHeight="100vh"
-      p={2}
+      height="100vh"
+      px={2}
     >
-      <Box width="100%" maxWidth={400}>
+      <Box
+        width="100%"
+        maxWidth={400}
+        p={4}
+        bgcolor="white"
+        borderRadius={2}
+        boxShadow={3}
+      >
         <Typography variant="h4" align="center" gutterBottom>
           Create Account
         </Typography>
@@ -100,11 +120,33 @@ export default function Signup() {
           <TextField
             fullWidth
             margin="normal"
+            label="Address"
+            name="address"
+            value={form.address}
+            onChange={(e) => setForm({ ...form, address: e.target.value })}
+            multiline
+            rows={1}
+          />
+
+          <TextField
+            fullWidth
+            margin="normal"
             label="Password"
             name="password"
             type="password"
             value={form.password}
             onChange={(e) => setForm({ ...form, password: e.target.value })}
+            required
+          />
+
+          <TextField
+            fullWidth
+            margin="normal"
+            label="Confirm Password"
+            name="confirmPassword"
+            type="password"
+            value={form.confirmPassword}
+            onChange={(e) => setForm({ ...form, confirmPassword: e.target.value })}
             required
           />
 

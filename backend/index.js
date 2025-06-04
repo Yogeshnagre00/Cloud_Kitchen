@@ -3,12 +3,15 @@ const cors = require("cors");
 const path = require("path");
 const db = require("./db");
 const authRoutes = require("./routes/auth");
+const orderRoutes = require("./routes/order");
+
 const authMiddleware = require("./middleware/authMiddleware");
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+app.use("/api/orders", orderRoutes);
 
 app.get("/", (req, res) => {
   res.send("Backend server is running");

@@ -42,34 +42,82 @@ const ViewCart = () => {
     return acc + product.price * qty;
   }, 0);
 
-  const handleSubmit = () => {
-    if (!user && registerDuringCheckout) {
-      // Perform registration first
-      fetch("http://localhost:5000/api/auth/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+ const handleSubmit = () => {
+  if (!user && registerDuringCheckout) {
+    // Register first, then save order
+    fetch("http://localhost:5000/api/auth/signup", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name: formData.name,
+        email: formData.email,
+        mobile: formData.mobile,
+        password: formData.password,
+        address: formData.address,
+      }),
+    })
+      .then(async (res) => {
+        if (!res.ok) {
+          const errorText = await res.text();
+          throw new Error(errorText);
+        }
+        return res.json();
+      })
+      .then(async (data) => {
+        if (data.token) {
+          localStorage.setItem("user", JSON.stringify(data));
+          alert("Registered successfully!");
+
+          // Update user state if needed
+          // Then save order
+          await saveOrder();
+        } else {
+          alert(data.error || "Registration failed");
+        }
+      })
+      .catch((err) => {
+        console.error("Signup error:", err);
+        alert("Signup failed: " + err.message);
+      });
+  } else {
+    // User logged in or guest without registration
+    saveOrder();
+  }
+};
+const saveOrder = async () => {
+  try {
+    const response = await fetch("http://localhost:5000/api/orders", {
+      method: "POST",
+      headers: { 
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${user?.token || ""}`, // if you use token auth
+      },
+      body: JSON.stringify({
+        userId: user?.id || null, // or get user id from token/data
+        cartItems,
+        totalPrice,
+        shippingDetails: {
           name: formData.name,
           email: formData.email,
-          password: formData.password,
-        }),
-      })
-        .then((res) => res.json())
-        .then((data) => {
-          if (data.token) {
-            localStorage.setItem("user", JSON.stringify(data));
-            alert("Registered successfully!");
-            // Proceed to save order here...
-          } else {
-            alert(data.message || "Registration failed");
-          }
-        });
-    } else {
-      // Proceed to save order as guest or logged-in user
-      console.log("Submitting Order:", formData, cartItems);
-      alert("Order submitted!");
+          mobile: formData.mobile,
+          address: formData.address,
+        },
+      }),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(errorText);
     }
-  };
+    
+    const data = await response.json();
+    alert("Order placed successfully!");
+    console.log("Order response:", data);
+  } catch (error) {
+    console.error("Order submission error:", error);
+    alert("Failed to submit order: " + error.message);
+  }
+};
 
   if (!cartItems || Object.keys(cartItems).length === 0) {
     return (
@@ -128,15 +176,6 @@ const ViewCart = () => {
               label="Mobile Number"
               margin="normal"
               value={formData.mobile}
-              onChange={handleChange}
-            />
-            <TextField
-              fullWidth
-              name="Email"
-              label="Email"
-              type="email"
-              margin="normal"
-              value={formData.email}
               onChange={handleChange}
             />
           <TextField
