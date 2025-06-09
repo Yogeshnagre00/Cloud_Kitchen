@@ -1,27 +1,18 @@
-/* Dashboard.css */
-
-.dashboard-container {
-  padding: 32px;
-  max-width: 1200px;
-  margin: 0 auto;
-}
 
 .header-banner {
-  background-color: #fbbc04; /* MUI warning.main is roughly this */
   border-radius: 24px;
-  padding: 32px;
   margin-bottom: 48px;
   text-align: center;
-  color: black;
-  font-weight: 700;
-  font-size: 2.5rem;
-  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  object-fit: cover;
 }
 
 .product-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 24px;
+  justify-content: center;
+  padding: 0 20px;  
+  margin-bottom: 80px; 
 }
 
 .product-card {

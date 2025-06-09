@@ -1,13 +1,13 @@
-import { Route, BrowserRouter as Router, Routes } from "react-router-dom";
+import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import Footer from "./components/footer";
 import Header from "./components/header";
 import Login from "./components/login";
-import Profile from "./components/pfofile";
 import Signup from "./components/signup";
 import { AuthProvider } from "./context/AuthContext";
 import Dashboard from "./pages/dashboardPage/dashboard";
 import ViewCart from "./pages/viewCartPage/ViewCart";
-import AdminOrders from "./pages/adminOrdersPage/adminOrder";
+//import AdminOrders from "./pages/adminOrdersPage/adminOrder";
+import Profile from "./components/profile";
 
 function App() {
   return (
@@ -21,7 +21,7 @@ function App() {
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/" element={<Dashboard />} />
           <Route path="/view-cart" element={<ViewCart />} />
-          <Route path="/admin/orders" element={<AdminOrders />} />
+          {/* <Route path="/admin/orders" element={<AdminOrders />} /> */}
         </Routes>
         <Footer />
       </Router>

@@ -5,10 +5,14 @@ const db = require("../db"); // adjust path if needed
 
 const router = express.Router();
 
-
+const JWT_SECRET = process.env.JWT_SECRET;
+if (!JWT_SECRET) {
+  throw new Error("Missing JWT_SECRET environment variable");
+}
 
 // Signup route
 router.post("/signup", async (req, res) => {
+  console.log("signup data:", req.body);
   const { name, email, mobile, password, address } = req.body;
 
   if (!name || !email || !mobile || !password || !address) {
@@ -43,23 +47,25 @@ router.post("/signup", async (req, res) => {
     );
 
     const user = result.rows[0];
-    const token = jwt.sign(
-      { id: user.id, email: user.email },
-      process.env.JWT_SECRET,
-      { expiresIn: "1h" }
-    );
 
-    res.json({ token, ...user });
+    // Use consistent token payload
+    const tokenPayload = { id: user.id, email: user.email, mobile: user.mobile };
+    const token = jwt.sign(tokenPayload, JWT_SECRET, { expiresIn: "1h" });
+
+    res.json({ token, user });
   } catch (err) {
     console.error("Signup Error:", err);
     res.status(500).json({ error: "Signup failed" });
   }
 });
 
-
-// Login route (with mobile instead of email)
+// Login route
 router.post("/login", async (req, res) => {
   const { mobile, password } = req.body;
+
+  if (!mobile || !password) {
+    return res.status(400).json({ error: "Mobile and password are required" });
+  }
 
   try {
     const result = await db.query("SELECT * FROM users WHERE mobile = $1", [
@@ -72,25 +78,19 @@ router.post("/login", async (req, res) => {
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) return res.status(401).json({ error: "Invalid credentials" });
 
-    const token = jwt.sign(
-      { id: user.id, mobile: user.mobile },
-      process.env.JWT_SECRET,
-      {
-        expiresIn: "1h",
-      }
-    );
-
-    res.json({
-      token,
-      user: {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        mobile: user.mobile,
-      },
+    const tokenPayload = { id: user.id, email: user.email, mobile: user.mobile };
+    const token = jwt.sign(tokenPayload, JWT_SECRET, {
+      expiresIn: "1h",
     });
+
+    res.json({ token, user: {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      mobile: user.mobile,
+    }});
   } catch (err) {
-    console.error(err);
+    console.error("Login Error:", err);
     res.status(500).json({ error: "Login failed" });
   }
 });

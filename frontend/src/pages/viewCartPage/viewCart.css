@@ -20,3 +20,9 @@
 .form-section {
   margin-top: 20px;
 }
+.form-section textarea,
+.form-section textarea:focus {
+  pointer-events: auto;
+  outline: none;
+}
+

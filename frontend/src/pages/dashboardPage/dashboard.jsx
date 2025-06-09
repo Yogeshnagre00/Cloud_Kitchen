@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import  { useEffect, useState } from "react";
 import {
   Box,
   Typography,
@@ -9,7 +9,7 @@ import {
   CardActions,
   Button,
 } from "@mui/material";
-import Header from "../../components/header";
+import bannerImage from "../../assets/banner_image.jpg";
 import "./Dashboard.css";
 import { useNavigate } from "react-router-dom";
 
@@ -34,7 +34,6 @@ const Dashboard = () => {
       if (updated[id] === 0) delete updated[id];
       return updated;
     });
-    
   };
 
   const totalItems = Object.values(quantities).reduce((a, b) => a + b, 0);
@@ -42,18 +41,29 @@ const Dashboard = () => {
     const qty = quantities[product.id] || 0;
     return acc + product.price * qty;
   }, 0);
-const handleViewCart = () => {
-  navigate("/view-cart", {
-    state: {
-      cartItems: quantities,
-      products: products,
-    },
-  });
-};
+  const handleViewCart = () => {
+    navigate("/view-cart", {
+      state: {
+        cartItems: quantities,
+        products: products,
+      },
+    });
+  };
   return (
     <>
       <Box className="dashboard-container">
-        <Box className="header-banner">Claud Kitchen</Box>
+        <Box className="header-banner">
+      <img
+        src={bannerImage}
+        alt="Claud Kitchen Banner"
+        style={{
+          width: "98vw",
+          height: "40vh",
+          objectFit: "cover",
+          display: "block",
+        }}
+      />
+    </Box>
 
         <Grid container spacing={4} className="product-grid">
           {products.map((product) => (
@@ -108,8 +118,8 @@ const handleViewCart = () => {
             {totalItems} item(s) | ₹{totalPrice}
           </Typography>
           <Button variant="contained" color="success" onClick={handleViewCart}>
-  View Cart
-</Button>
+            View Cart
+          </Button>
         </Box>
       )}
     </>
