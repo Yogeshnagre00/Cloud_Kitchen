@@ -26,7 +26,7 @@ const Header = () => {
           sx={{ fontWeight: "bold", cursor: "pointer" }}
           onClick={() => navigate("/")}
         >
-          Claud Kitchen
+          Cloud kitchen
         </Typography>
 
         <Box>

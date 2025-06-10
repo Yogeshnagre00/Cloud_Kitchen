@@ -13,30 +13,39 @@ import bannerImage from "../../assets/banner_image.jpg";
 import "./Dashboard.css";
 import { useNavigate } from "react-router-dom";
 
+// Main Dashboard component for displaying products and managing cart
 const Dashboard = () => {
-  const [products, setProducts] = useState([]);
-  const [quantities, setQuantities] = useState({});
-  const navigate = useNavigate();
+  const [products, setProducts] = useState([]); // Stores the list of products from API
+  const [quantities, setQuantities] = useState({}); // Stores quantity of each product in cart
+  const navigate = useNavigate(); // For navigation to cart page
 
+  // Fetch products from backend API when component mounts
   useEffect(() => {
     fetch("http://localhost:5000/api/products")
       .then((res) => res.json())
       .then((data) => setProducts(data))
       .catch((error) => console.error("Error fetching products:", error));
-  }, []);
+      
+  }, []); // Empty dependency array means this runs once on mount
+
+  // Handle increasing quantity of a product in cart
   const increaseQuantity = (id) => {
     setQuantities((prev) => ({ ...prev, [id]: (prev[id] || 0) + 1 }));
   };
 
+  // Handle decreasing quantity of a product in cart
   const decreaseQuantity = (id) => {
     setQuantities((prev) => {
       const updated = { ...prev, [id]: Math.max((prev[id] || 0) - 1, 0) };
-      if (updated[id] === 0) delete updated[id];
+      if (updated[id] === 0) delete updated[id]; // Remove item if quantity reaches 0
       return updated;
     });
   };
 
+  // Calculate total number of items in cart
   const totalItems = Object.values(quantities).reduce((a, b) => a + b, 0);
+  
+  // Calculate total price of all items in cart
   const totalPrice = products.reduce((acc, product) => {
     const qty = quantities[product.id] || 0;
     return acc + product.price * qty;

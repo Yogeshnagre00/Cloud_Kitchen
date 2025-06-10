@@ -16,6 +16,7 @@ import useAuth from "../../hooks/useAuth";
 import "./viewCart.css";
 
 const ViewCart = () => {
+
   const location = useLocation();
   const navigate = useNavigate();
   const { login, user: authUser } = useAuth();
@@ -28,15 +29,15 @@ const ViewCart = () => {
 
   const { cartItems = {}, products = [] } = location.state || {};
 
+  // Initialize formData with empty strings, will be updated with user data if available
   const [formData, setFormData] = useState({
-    // Initialize formData with user data if available
     name: "",
     address: "",
     mobile: "",
     email: "",
     password: "",
   });
-
+  // State for form validation and submission
   const [registerDuringCheckout, setRegisterDuringCheckout] = useState(true);
   const [formErrors, setFormErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -54,11 +55,12 @@ const ViewCart = () => {
         mobile: authUser.mobile || "",
         address: authUser.address || "",   
         password: "", // Never autofill password
+
       });
     }
   }, [authUser]);
 
-  const handleChange = (e) => {
+const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
     if (formErrors[name]) {
@@ -69,7 +71,8 @@ const ViewCart = () => {
   const handleCheckboxChange = (e) => {
     setRegisterDuringCheckout(e.target.checked);
   };
-
+  // Validate form fields
+  // This function checks if required fields are filled and validates email and mobile formats
   const validateForm = () => {
     const errors = {};
     const requiredFields = ["name", "mobile", "address", "email"];
@@ -96,7 +99,8 @@ const ViewCart = () => {
     return Object.keys(errors).length === 0;
   };
 
-  const totalPrice = products.reduce((acc, product) => {
+  // Calculate total price based on cart items and product prices
+const totalPrice = products.reduce((acc, product) => {
     const qty = cartItems[product.id] || 0;
     return acc + product.price * qty;
   }, 0);
@@ -144,7 +148,10 @@ const ViewCart = () => {
         name: product.name,
         qty: cartItems[product.id],
       }));
-
+    if (items.length === 0) {
+      throw new Error("No items in cart to place order");
+    } 
+    // Prepare order payload
     const orderPayload = {
       name: formData.name,
       email: formData.email,
@@ -205,7 +212,7 @@ const ViewCart = () => {
   const goToDashboard = () => {
     navigate("/dashboard");
   };
-
+  // If order is placed and orderDetails are available, show success message
   if (orderPlaced && orderDetails) {
     return (
       <Box sx={{ p: 4, textAlign: "center" }}>
