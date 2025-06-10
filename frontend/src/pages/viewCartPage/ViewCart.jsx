@@ -12,21 +12,24 @@ import {
   FormControlLabel,
 } from "@mui/material";
 import { useLocation, useNavigate } from "react-router-dom";
+import useAuth from "../../hooks/useAuth";
 import "./viewCart.css";
 
 const ViewCart = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { login, user: authUser } = useAuth();
 
-  // Initialize user once from localStorage
+
+  // Initialize user from auth context first, then fallback to localStorage
   const [user, setUser] = useState(() => {
-    const storedUser = localStorage.getItem("user");
-    return storedUser ? JSON.parse(storedUser) : null;
+    return authUser || JSON.parse(localStorage.getItem("user")) || null;
   });
 
   const { cartItems = {}, products = [] } = location.state || {};
 
   const [formData, setFormData] = useState({
+    // Initialize formData with user data if available
     name: "",
     address: "",
     mobile: "",
@@ -37,30 +40,27 @@ const ViewCart = () => {
   const [registerDuringCheckout, setRegisterDuringCheckout] = useState(true);
   const [formErrors, setFormErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  // New state to track order success and details
   const [orderPlaced, setOrderPlaced] = useState(false);
   const [orderDetails, setOrderDetails] = useState(null);
   const [generalError, setGeneralError] = useState("");
 
-  // Autofill form fields when user changes (including on mount)
+  // Sync form with user data when authUser changes
   useEffect(() => {
-    if (user) {
+    if (authUser) {
+      setUser(authUser);
       setFormData({
-        name: user.name || "",
-        email: user.email || "",
-        mobile: user.mobile || "",
-        address: user.address || "",
+        name: authUser.name || "",
+        email: authUser.email || "",
+        mobile: authUser.mobile || "",
+        address: authUser.address || "",   
         password: "", // Never autofill password
       });
     }
-  }, [user]);
+  }, [authUser]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-
     setFormData((prev) => ({ ...prev, [name]: value }));
-
     if (formErrors[name]) {
       setFormErrors((prev) => ({ ...prev, [name]: "" }));
     }
@@ -121,9 +121,16 @@ const ViewCart = () => {
 
     const data = await response.json();
     if (data.token) {
+      // Update both local state and auth context
       localStorage.setItem("user", JSON.stringify(data));
+      login(data.token, {
+        id: data.id,
+        name: data.name,
+        email: data.email,
+        mobile: data.mobile,
+        address: data.address,
+      });
       setUser(data);
-      alert("Registered successfully!");
     } else {
       throw new Error(data.error || "Registration failed");
     }
@@ -153,7 +160,7 @@ const ViewCart = () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${user?.token || ""}`,
+          Authorization: user?.token ? `Bearer ${user.token}` : "",
         },
         body: JSON.stringify(orderPayload),
       });
@@ -161,9 +168,11 @@ const ViewCart = () => {
       const data = await response.json();
       if (!response.ok) throw new Error(data.message || "Order failed");
 
-      // Set success state
       setOrderPlaced(true);
-      setOrderDetails(orderPayload);
+      setOrderDetails({
+        ...orderPayload,
+        orderId: data.orderId || Date.now().toString(),
+      });
     } catch (error) {
       console.error("Order Error:", error);
       throw error;
@@ -197,7 +206,6 @@ const ViewCart = () => {
     navigate("/dashboard");
   };
 
-  // Show success screen if order placed
   if (orderPlaced && orderDetails) {
     return (
       <Box sx={{ p: 4, textAlign: "center" }}>
@@ -208,7 +216,10 @@ const ViewCart = () => {
           Thank you, {orderDetails.name}!
         </Typography>
         <Typography variant="body1">
-          We've received your order. Total: ₹{orderDetails.total_price}
+          Order ID: {orderDetails.orderId}
+        </Typography>
+        <Typography variant="body1">
+          Total: ₹{orderDetails.total_price}
         </Typography>
 
         <Box mt={3}>
@@ -224,7 +235,7 @@ const ViewCart = () => {
 
         <Box mt={5}>
           <Button variant="contained" color="primary" onClick={goToDashboard}>
-            Return to Dashboard
+            Go to Dashboard
           </Button>
         </Box>
       </Box>
@@ -235,6 +246,9 @@ const ViewCart = () => {
     return (
       <Box p={4}>
         <Typography variant="h6">Your cart is empty.</Typography>
+        <Button variant="contained" onClick={() => navigate("/dashboard")}>
+          Browse Products
+        </Button>
       </Box>
     );
   }
@@ -277,7 +291,7 @@ const ViewCart = () => {
 
         <Box component="form" onSubmit={handleSubmit} className="form-section">
           <Typography variant="h5" sx={{ mb: 2 }}>
-            Your Details
+            {user ? "Delivery Details" : "Your Information"}
           </Typography>
 
           {generalError && (
@@ -356,7 +370,7 @@ const ViewCart = () => {
                     onChange={handleCheckboxChange}
                   />
                 }
-                label="Register during checkout"
+                label="Create an account for faster checkout next time"
               />
             </>
           )}
@@ -367,8 +381,10 @@ const ViewCart = () => {
             color="primary"
             disabled={isSubmitting}
             sx={{ mt: 2 }}
+            fullWidth
+            size="large"
           >
-            {isSubmitting ? "Processing..." : "Submit Order"}
+            {isSubmitting ? "Processing..." : "Place Order"}
           </Button>
         </Box>
       </Box>

@@ -12,7 +12,7 @@ if (!JWT_SECRET) {
 
 // Signup route
 router.post("/signup", async (req, res) => {
-  console.log("signup data:", req.body);
+  //console.log("signup data:", req.body);
   const { name, email, mobile, password, address } = req.body;
 
   if (!name || !email || !mobile || !password || !address) {

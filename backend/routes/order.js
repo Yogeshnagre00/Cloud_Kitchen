@@ -3,7 +3,7 @@ const Joi = require("joi");
 const db = require("../db");
 const router = express.Router();
 
-// Enhanced validation schema including order status
+// Order validation schema
 const orderSchema = Joi.object({
   name: Joi.string().min(2).max(100).required(),
   email: Joi.string().email().max(100).required(),
@@ -25,14 +25,28 @@ const orderSchema = Joi.object({
     .default("Placed"),
 });
 
-// POST create new order with status
+
+// GET /api/orders - Fetch all orders
+router.get("/", async (req, res) => {
+  try {
+    const result = await db.query("SELECT * FROM orders ORDER BY id DESC");
+    res.json({ success: true, orders: result.rows });
+  } catch (err) {
+    console.error("Fetch Orders Error:", err);
+    res.status(500).json({
+      message: "Failed to fetch orders",
+      error: process.env.NODE_ENV === "development" ? err.message : undefined,
+    });
+  }
+});
+
+
+// POST /api/orders - Create a new order
 router.post("/", async (req, res) => {
   try {
-
     const { error, value } = orderSchema.validate(req.body, {
       abortEarly: false,
       stripUnknown: true,
-      allowUnknown: true,
     });
 
     if (error) {
@@ -51,12 +65,11 @@ router.post("/", async (req, res) => {
       email: value.email,
       mobile: value.mobile,
       address: value.address,
-      items: value.items || value.cartItems,
-      total_price: value.total_price || value.totalPrice,
+      items: value.items,
+      total_price: value.total_price,
       user_id: value.user_id || null,
-      status: value.status || "Placed",
+      status: value.status,
     };
-
 
     const result = await db.query(
       `INSERT INTO orders (
@@ -83,27 +96,12 @@ router.post("/", async (req, res) => {
     return res.status(500).json({
       message: "Order processing failed",
       error: process.env.NODE_ENV === "development" ? err.message : undefined,
-      dbError: process.env.NODE_ENV === "development" ? err : undefined,
     });
   }
 });
-// Update order status
-router.put('/:id/status', async (req, res) => {
-  const { id } = req.params;
-  const { status } = req.body;
 
-  try {
-    await pool.query(
-      'UPDATE orders SET status = $1 WHERE order_id = $2',
-      [status, id]
-    );
-    res.json({ message: 'Status updated successfully' });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Server error' });
-  }
-});
-// PUT update order status by order ID
+
+// PUT /api/orders/:orderId/status - Update order status
 router.put("/:orderId/status", async (req, res) => {
   const { status } = req.body;
   const { orderId } = req.params;
@@ -114,6 +112,7 @@ router.put("/:orderId/status", async (req, res) => {
     "Out for Delivery",
     "Delivered",
   ];
+
   if (!allowedStatuses.includes(status)) {
     return res.status(400).json({ message: "Invalid status" });
   }

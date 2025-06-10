@@ -35,7 +35,7 @@ app.get("/api/profile", authMiddleware, async (req, res) => {
     }
     res.json(result.rows[0]);
   } catch (err) {
-    console.error(err);
+    
     res.status(500).json({ error: "Server error" });
   }
 });
@@ -46,7 +46,7 @@ app.get("/api/products", async (req, res) => {
     const result = await db.query("SELECT * FROM products ORDER BY id");
     res.json(result.rows);
   } catch (err) {
-    console.error(err);
+    
     res.status(500).json({ error: "Failed to fetch products" });
   }
 });
