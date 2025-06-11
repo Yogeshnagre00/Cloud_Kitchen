@@ -1,22 +1,34 @@
 import { Box, Typography, Button, Avatar, TextField } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import useAuth from "../hooks/useAuth";
-import { useState} from "react";
+import { useState, useEffect } from "react";
 
 export default function Profile() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
 
-  // State for editable profile fields
   const [profileData, setProfileData] = useState({
-    name: user?.name || "",
-    email: user?.email || "",
-    mobile: user?.mobile || "",
-    address: user?.address || "",
-    dob: user?.dob || "",
+    name: "",
+    email: "",
+    mobile: "",
+    address: "",
+    dob: "",
   });
 
   const [editing, setEditing] = useState(false);
+
+  // Sync profileData when user is available or updated
+  useEffect(() => {
+    if (user) {
+      setProfileData({
+        name: user.name || "",
+        email: user.email || "",
+        mobile: user.mobile || "",
+        address: user.address || "",
+        dob: user.dob || "",
+      });
+    }
+  }, [user]);
 
   const handleChange = (e) => {
     setProfileData((prev) => ({
@@ -31,11 +43,20 @@ export default function Profile() {
   };
 
   const handleSave = () => {
-    // TODO: Update this with backend API call to save profileData
+    // TODO: Send `profileData` to backend API to persist changes
     console.log("Updated profile data:", profileData);
     alert("Profile updated!");
     setEditing(false);
   };
+
+  // Prevent rendering if user is not yet loaded
+  if (!user) {
+    return (
+      <Box sx={{ p: 4, textAlign: "center" }}>
+        <Typography variant="h6">Loading profile...</Typography>
+      </Box>
+    );
+  }
 
   return (
     <Box sx={{ p: 4, maxWidth: 600, mx: "auto" }}>
@@ -122,11 +143,7 @@ export default function Profile() {
         </Box>
       ) : (
         <Box sx={{ display: "flex", gap: 2 }}>
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={() => setEditing(true)}
-          >
+          <Button variant="contained" color="primary" onClick={() => setEditing(true)}>
             Edit Profile
           </Button>
           <Button variant="contained" color="error" onClick={handleLogout}>

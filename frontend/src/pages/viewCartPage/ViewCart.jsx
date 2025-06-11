@@ -82,7 +82,6 @@ const handleChange = (e) => {
         errors[field] = "This field is required";
       }
     });
-
     if (formData.mobile && !/^\d{10}$/.test(formData.mobile)) {
       errors.mobile = "Invalid mobile number";
     }
