@@ -16,11 +16,9 @@ import useAuth from "../../hooks/useAuth";
 import "./viewCart.css";
 
 const ViewCart = () => {
-
   const location = useLocation();
   const navigate = useNavigate();
   const { login, user: authUser } = useAuth();
-
 
   // Initialize user from auth context first, then fallback to localStorage
   const [user, setUser] = useState(() => {
@@ -54,7 +52,7 @@ const ViewCart = () => {
         email: authUser.email || "",
         mobile: authUser.mobile || "",
         address: authUser.address || "",   
-        password: "", // Never autofill password
+        password: "", 
 
       });
     }
@@ -105,39 +103,44 @@ const totalPrice = products.reduce((acc, product) => {
   }, 0);
 
   const registerUser = async () => {
-    const response = await fetch("http://localhost:5000/api/auth/signup", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        name: formData.name,
-        email: formData.email,
-        mobile: formData.mobile,
-        password: formData.password,
-        address: formData.address,
-      }),
+  const response = await fetch("http://localhost:5000/api/auth/signup", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      name: formData.name,
+      email: formData.email,
+      mobile: formData.mobile,
+      password: formData.password,
+      address: formData.address,
+    }),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+
+    if (response.status === 409) {
+      throw new Error("An account with this email or mobile already exists.");
+    }
+
+    throw new Error(errorText || "Registration failed");
+  }
+
+  const data = await response.json();
+  if (data.token) {
+    localStorage.setItem("user", JSON.stringify(data));
+    login(data.token, {
+      id: data.id,
+      name: data.name,
+      email: data.email,
+      mobile: data.mobile,
+      address: data.address,
     });
+    setUser(data);
+  } else {
+    throw new Error(data.error || "Registration failed");
+  }
+};
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(errorText);
-    }
-
-    const data = await response.json();
-    if (data.token) {
-      // Update both local state and auth context
-      localStorage.setItem("user", JSON.stringify(data));
-      login(data.token, {
-        id: data.id,
-        name: data.name,
-        email: data.email,
-        mobile: data.mobile,
-        address: data.address,
-      });
-      setUser(data);
-    } else {
-      throw new Error(data.error || "Registration failed");
-    }
-  };
 
   const saveOrder = async () => {
     const items = products

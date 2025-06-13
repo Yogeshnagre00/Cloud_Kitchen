@@ -4,9 +4,9 @@ import {
   CircularProgress,
   TextField,
   Typography,
+  Alert,
 } from "@mui/material";
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import useAuth from "../hooks/useAuth";
 
 export default function Signup() {
@@ -14,69 +14,122 @@ export default function Signup() {
     name: "",
     email: "",
     password: "",
-    confirmPassword: "",  // added confirmPassword field
+    confirmPassword: "",
     mobile: "",
     address: "",
   });
-  const [error, setError] = useState("");
+  
+  const [error, setError] = useState({ message: "", fields: [] });
   const [loading, setLoading] = useState(false);
-  const navigate = useNavigate();
   const { login } = useAuth();
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setForm(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const validateForm = () => {
+    const errors = [];
+    
+    // Required fields validation
+    if (!form.name.trim()) errors.push("name");
+    if (!form.email.trim()) errors.push("email");
+    if (!form.mobile.trim()) errors.push("mobile");
+    if (!form.password) errors.push("password");
+    if (!form.confirmPassword) errors.push("confirmPassword");
+    
+    // Password match validation
+    if (form.password !== form.confirmPassword) {
+      return {
+        valid: false,
+        error: {
+          message: "Passwords do not match",
+          fields: ["password", "confirmPassword"]
+        }
+      };
+    }
+    
+    if (errors.length > 0) {
+      return {
+        valid: false,
+        error: {
+          message: "Please fill all required fields",
+          fields: errors
+        }
+      };
+    }
+    
+    return { valid: true };
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError("");
+    setError({ message: "", fields: [] });
 
-    // Client-side validation for password match
-    if (form.password !== form.confirmPassword) {
-      setError("Passwords do not match");
+    const { valid, error: validationError } = validateForm();
+    if (!valid) {
+      setError(validationError);
       return;
     }
 
     setLoading(true);
 
     try {
-      const { confirmPassword: _confirmPassword, ...submitData } = form;
-
+      const {...submitData } = form;
 
       const res = await fetch("http://localhost:5000/api/auth/signup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(submitData),  // send without confirmPassword
+        body: JSON.stringify(submitData),
       });
 
       const data = await res.json();
 
-      if (!res.ok) throw new Error(data.error || "Signup failed");
+      if (!res.ok) {
+        throw new Error(data.error || data.message || "Signup failed");
+      }
 
+      // Store complete user data in auth context
       login(data.token, {
-        name: data.name,
-        email: data.email,
-        mobile: data.mobile,
-        address: data.address,
+        id: data.user.id,
+        name: data.user.name,
+        email: data.user.email,
+        mobile: data.user.mobile,
+        address: data.user.address,
+        // Add other profile fields as needed
       });
 
-      navigate("/dashboard");
+      // Redirect to profile page to complete additional info
+      
     } catch (err) {
-      setError(err.message);
+      console.error("Signup error:", err);
+      setError({ 
+        message: err.message,
+        fields: [] 
+      });
     } finally {
       setLoading(false);
     }
   };
+
+  const isFieldError = (fieldName) => error.fields.includes(fieldName);
 
   return (
     <Box
       display="flex"
       justifyContent="center"
       alignItems="center"
-      height="100vh"
+      minHeight="100vh"
       px={2}
     >
       <Box
         width="100%"
         maxWidth={400}
         p={4}
-        bgcolor="white"
+        bgcolor="background.paper"
         borderRadius={2}
         boxShadow={3}
       >
@@ -84,37 +137,46 @@ export default function Signup() {
           Create Account
         </Typography>
 
+        {error.message && (
+          <Alert severity="error" sx={{ mb: 2 }}>
+            {error.message}
+          </Alert>
+        )}
+
         <form onSubmit={handleSubmit}>
           <TextField
             fullWidth
             margin="normal"
-            label="Full Name"
+            label="Full Name *"
             name="name"
             value={form.name}
-            onChange={(e) => setForm({ ...form, name: e.target.value })}
-            required
+            onChange={handleChange}
+            error={isFieldError("name")}
+            helperText={isFieldError("name") && "Name is required"}
           />
 
           <TextField
             fullWidth
             margin="normal"
-            label="Email"
+            label="Email *"
             name="email"
             type="email"
             value={form.email}
-            onChange={(e) => setForm({ ...form, email: e.target.value })}
-            required
+            onChange={handleChange}
+            error={isFieldError("email")}
+            helperText={isFieldError("email") && "Email is required"}
           />
 
           <TextField
             fullWidth
             margin="normal"
-            label="Mobile Number"
+            label="Mobile Number *"
             name="mobile"
             type="tel"
             value={form.mobile}
-            onChange={(e) => setForm({ ...form, mobile: e.target.value })}
-            required
+            onChange={handleChange}
+            error={isFieldError("mobile")}
+            helperText={isFieldError("mobile") && "Mobile number is required"}
           />
 
           <TextField
@@ -123,31 +185,37 @@ export default function Signup() {
             label="Address"
             name="address"
             value={form.address}
-            onChange={(e) => setForm({ ...form, address: e.target.value })}
+            onChange={handleChange}
             multiline
-            rows={1}
+            rows={2}
           />
 
           <TextField
             fullWidth
             margin="normal"
-            label="Password"
+            label="Password *"
             name="password"
             type="password"
             value={form.password}
-            onChange={(e) => setForm({ ...form, password: e.target.value })}
-            required
+            onChange={handleChange}
+            error={isFieldError("password")}
+            helperText={isFieldError("password") && "Password is required"}
           />
 
           <TextField
             fullWidth
             margin="normal"
-            label="Confirm Password"
+            label="Confirm Password *"
             name="confirmPassword"
             type="password"
             value={form.confirmPassword}
-            onChange={(e) => setForm({ ...form, confirmPassword: e.target.value })}
-            required
+            onChange={handleChange}
+            error={isFieldError("confirmPassword")}
+            helperText={
+              isFieldError("confirmPassword") && 
+              (error.fields.includes("confirmPassword") ? 
+                "Passwords must match" : "Please confirm your password")
+            }
           />
 
           <Button
@@ -158,14 +226,8 @@ export default function Signup() {
             disabled={loading}
             sx={{ mt: 3, height: 48 }}
           >
-            {loading ? <CircularProgress size={24} /> : "Sign Up"}
+            {loading ? <CircularProgress size={24} color="inherit" /> : "Sign Up"}
           </Button>
-
-          {error && (
-            <Typography color="error" align="center" sx={{ mt: 2 }}>
-              {error}
-            </Typography>
-          )}
         </form>
       </Box>
     </Box>

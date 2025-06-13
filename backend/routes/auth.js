@@ -33,6 +33,7 @@ router.post("/signup", async (req, res) => {
           .json({ error: "Email and Mobile already registered" });
       } else if (existingUser.email === email) {
         return res.status(409).json({ error: "Email already registered" });
+        
       } else {
         return res
           .status(409)
