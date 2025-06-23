@@ -53,7 +53,6 @@ const ViewCart = () => {
         mobile: authUser.mobile || "",
         address: authUser.address || "",   
         password: "", 
-
       });
     }
   }, [authUser]);

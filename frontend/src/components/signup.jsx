@@ -122,7 +122,7 @@ export default function Signup() {
       display="flex"
       justifyContent="center"
       alignItems="center"
-      minHeight="100vh"
+      minHeight="100vh" 
       px={2}
     >
       <Box
