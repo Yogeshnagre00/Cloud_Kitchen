@@ -1,7 +1,11 @@
 const express = require("express");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+<<<<<<< HEAD
 const db = require("../db");
+=======
+const db = require("../db"); // adjust path if needed
+>>>>>>> 0cca3db4d70e4b7559b5429ce182a00babd1f8d2
 
 const router = express.Router();
 
@@ -12,6 +16,10 @@ if (!JWT_SECRET) {
 
 // Signup route
 router.post("/signup", async (req, res) => {
+<<<<<<< HEAD
+=======
+  //console.log("signup data:", req.body);
+>>>>>>> 0cca3db4d70e4b7559b5429ce182a00babd1f8d2
   const { name, email, mobile, password, address } = req.body;
 
   if (!name || !email || !mobile || !password || !address) {

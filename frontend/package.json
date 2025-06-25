@@ -14,7 +14,10 @@
     "@emotion/styled": "^11.14.0",
     "@mui/icons-material": "^7.1.0",
     "@mui/material": "^7.1.1",
+<<<<<<< HEAD
     "axios": "^1.10.0",
+=======
+>>>>>>> 0cca3db4d70e4b7559b5429ce182a00babd1f8d2
     "lucide-react": "^0.511.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
