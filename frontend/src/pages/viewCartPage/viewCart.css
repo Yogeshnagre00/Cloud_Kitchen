@@ -1,0 +1,28 @@
+.view-cart-container {
+  padding: 20px;
+}
+
+.cart-item-card {
+  border: 1px solid #ddd;
+}
+
+.cart-summary {
+  margin-top: 30px;
+  padding: 20px;
+  background-color: #f9f9f9;
+}
+
+.form-header {
+  margin-top: 20px;
+  margin-bottom: 10px;
+}
+
+.form-section {
+  margin-top: 20px;
+}
+.form-section textarea,
+.form-section textarea:focus {
+  pointer-events: auto;
+  outline: none;
+}
+
