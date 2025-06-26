@@ -5,7 +5,6 @@ import react from '@vitejs/plugin-react-swc'
 export default defineConfig({
   plugins: [react()],
 })
-<<<<<<< HEAD
 // export default defineConfig({
 //   server: {
 //     proxy: {
@@ -15,5 +14,3 @@ export default defineConfig({
 //   },
 //   plugins: [react()],
 // });
-=======
->>>>>>> 0cca3db4d70e4b7559b5429ce182a00babd1f8d2

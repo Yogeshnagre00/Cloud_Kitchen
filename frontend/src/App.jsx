@@ -1,7 +1,3 @@
-<<<<<<< HEAD
-
-=======
->>>>>>> 0cca3db4d70e4b7559b5429ce182a00babd1f8d2
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import Footer from "./components/footer";
 import Header from "./components/header";

@@ -99,13 +99,6 @@ router.post("/", async (req, res) => {
     });
   }
 });
-
-
-<<<<<<< HEAD
-//Update order status
-=======
-// PUT /api/orders/:orderId/status - Update order status
->>>>>>> 0cca3db4d70e4b7559b5429ce182a00babd1f8d2
 router.put("/:orderId/status", async (req, res) => {
   const { status } = req.body;
   const { orderId } = req.params;
