@@ -1,17 +1,24 @@
 import { createContext, useState, useEffect } from "react";
+import PropTypes from "prop-types";
 
-const AuthContext = createContext();
+const AuthContext = createContext(null); 
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    const userData = localStorage.getItem("user");
-    if (token && userData) {
-      setUser(JSON.parse(userData));
+    try {
+      const token = localStorage.getItem("token");
+      const userData = localStorage.getItem("user");
+      if (token && userData) {
+        setUser(JSON.parse(userData));
+      }
+    } catch (error) {
+      console.error("Error reading auth data from localStorage:", error);
+      localStorage.removeItem("user");
+      localStorage.removeItem("token");
     }
-  }, []);
+  }, []); // empty dependency is fine
 
   const login = (token, userData) => {
     localStorage.setItem("token", token);
@@ -30,6 +37,11 @@ export const AuthProvider = ({ children }) => {
       {children}
     </AuthContext.Provider>
   );
+};
+
+// Validate props for AuthProvider
+AuthProvider.propTypes = {
+  children: PropTypes.node.isRequired,
 };
 
 export default AuthContext;
