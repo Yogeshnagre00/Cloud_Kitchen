@@ -10,7 +10,7 @@ const API = axios.create({
   withCredentials: true,
 });
 
-// Attach auth token if present
+// Request interceptor remains the same
 API.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem("token");
@@ -22,7 +22,7 @@ API.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// Handle responses
+// Response interceptor remains the same
 API.interceptors.response.use(
   (response) => response.data,
   (error) => {
@@ -60,7 +60,7 @@ API.interceptors.response.use(
   }
 );
 
-// Organized API endpoints
+// Enhanced API endpoints with specification support
 const api = {
   auth: {
     login: (credentials) => API.post("/auth/login", credentials),
@@ -68,23 +68,49 @@ const api = {
     logout: () => API.post("/auth/logout"),
     refresh: () => API.post("/auth/refresh"),
   },
+
   products: {
+    // Basic product endpoints
     getAll: () => API.get("/products"),
     getById: (id) => API.get(`/products/${id}`),
     create: (productData) => API.post("/products", productData),
     update: (id, productData) => API.put(`/products/${id}`, productData),
     delete: (id) => API.delete(`/products/${id}`),
+    
+    // Specification management
+    getSpecifications: (productId) => API.get(`/products/${productId}/specifications`),
+    addSpecification: (productId, specData) => 
+      API.post(`/products/${productId}/specifications`, specData),
+    updateSpecification: (productId, specId, specData) => 
+      API.put(`/products/${productId}/specifications/${specId}`, specData),
+    deleteSpecification: (productId, specId) => 
+      API.delete(`/products/${productId}/specifications/${specId}`),
+    
+    // Specification types
+    getSpecificationTypes: () => API.get("/specification-types"),
+    createSpecificationType: (typeData) => API.post("/specification-types", typeData),
   },
+
   orders: {
     getOrders: () => API.get("/orders"),
     createOrder: (orderData) => API.post("/orders", orderData),
     getOrder: (id) => API.get(`/orders/${id}`),
     cancelOrder: (id) => API.delete(`/orders/${id}`),
   },
+
   user: {
     getProfile: () => API.get("/users/me"),
     updateProfile: (profileData) => API.patch("/users/me", profileData),
     changePassword: (passwordData) => API.patch("/users/password", passwordData),
+  },
+
+  // Utility endpoints
+  upload: {
+    image: (formData) => API.post("/upload/image", formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    }),
   },
 };
 

@@ -3,9 +3,9 @@ const cors = require("cors");
 const path = require("path");
 const db = require("./db");
 
-const authRoutes = require("./routes/auth");    // ✅ import once
-const orderRoutes = require("./routes/order");  // ✅ import once
-const authMiddleware = require("./middleware/authMiddleware"); // ✅ import once
+const authRoutes = require("./routes/auth");
+const orderRoutes = require("./routes/order");  
+const authMiddleware = require("./middleware/authMiddleware"); 
 
 const app = express();
 
