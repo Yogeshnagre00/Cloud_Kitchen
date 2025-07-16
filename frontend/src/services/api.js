@@ -1,9 +1,12 @@
 import axios from "axios";
 import { logger } from "./logger";
 
+// Fallback to localhost if env is not defined
+const baseURL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api";
+
+// Axios instance
 const API = axios.create({
-  
-  baseURL: import.meta.env.VITE_API_BASE_URL || "http://43.201.28.251:5000/api",
+  baseURL,
   timeout: 10000,
   headers: {
     "Content-Type": "application/json",
@@ -11,7 +14,7 @@ const API = axios.create({
   withCredentials: true,
 });
 
-// Request interceptor remains the same
+// Request interceptor
 API.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem("token");
@@ -23,7 +26,7 @@ API.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// Response interceptor remains the same
+// Response interceptor
 API.interceptors.response.use(
   (response) => response.data,
   (error) => {
@@ -35,7 +38,7 @@ API.interceptors.response.use(
       status = error.response.status;
       data = error.response.data;
 
-      if (error.response.data && error.response.data.message) {
+      if (error.response.data?.message) {
         errorMessage = error.response.data.message;
       } else if (error.message) {
         errorMessage = error.message;
@@ -53,7 +56,6 @@ API.interceptors.response.use(
           break;
         default:
           logger.error(`API Error: ${status}`, { url: error.config?.url, data });
-          break;
       }
     }
 
@@ -61,7 +63,7 @@ API.interceptors.response.use(
   }
 );
 
-// Enhanced API endpoints with specification support
+// Centralized API abstraction
 const api = {
   auth: {
     login: (credentials) => API.post("/auth/login", credentials),
@@ -71,23 +73,17 @@ const api = {
   },
 
   products: {
-    // Basic product endpoints
     getAll: () => API.get("/products"),
     getById: (id) => API.get(`/products/${id}`),
-    create: (productData) => API.post("/products", productData),
-    update: (id, productData) => API.put(`/products/${id}`, productData),
+    create: (data) => API.post("/products", data),
+    update: (id, data) => API.put(`/products/${id}`, data),
     delete: (id) => API.delete(`/products/${id}`),
-    
-    // Specification management
+
     getSpecifications: (productId) => API.get(`/products/${productId}/specifications`),
-    addSpecification: (productId, specData) => 
-      API.post(`/products/${productId}/specifications`, specData),
-    updateSpecification: (productId, specId, specData) => 
-      API.put(`/products/${productId}/specifications/${specId}`, specData),
-    deleteSpecification: (productId, specId) => 
-      API.delete(`/products/${productId}/specifications/${specId}`),
-    
-    // Specification types
+    addSpecification: (productId, specData) => API.post(`/products/${productId}/specifications`, specData),
+    updateSpecification: (productId, specId, specData) => API.put(`/products/${productId}/specifications/${specId}`, specData),
+    deleteSpecification: (productId, specId) => API.delete(`/products/${productId}/specifications/${specId}`),
+
     getSpecificationTypes: () => API.get("/specification-types"),
     createSpecificationType: (typeData) => API.post("/specification-types", typeData),
   },
@@ -105,13 +101,13 @@ const api = {
     changePassword: (passwordData) => API.patch("/users/password", passwordData),
   },
 
-  // Utility endpoints
   upload: {
-    image: (formData) => API.post("/upload/image", formData, {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
-    }),
+    image: (formData) =>
+      API.post("/upload/image", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      }),
   },
 };
 

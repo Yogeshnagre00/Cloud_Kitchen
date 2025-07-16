@@ -13,21 +13,21 @@ import {
 } from "@mui/material";
 import { useLocation, useNavigate } from "react-router-dom";
 import useAuth from "../../hooks/useAuth";
+
 import "./viewCart.css";
+import api from "../../services/api";
 
 const ViewCart = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { login, user: authUser } = useAuth();
 
-  // Initialize user from auth context first, then fallback to localStorage
   const [user, setUser] = useState(() => {
     return authUser || JSON.parse(localStorage.getItem("user")) || null;
   });
 
   const { cartItems = {}, products = [] } = location.state || {};
 
-  // Initialize formData with empty strings, will be updated with user data if available
   const [formData, setFormData] = useState({
     name: "",
     address: "",
@@ -35,7 +35,7 @@ const ViewCart = () => {
     email: "",
     password: "",
   });
-  // State for form validation and submission
+
   const [registerDuringCheckout, setRegisterDuringCheckout] = useState(true);
   const [formErrors, setFormErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -43,7 +43,6 @@ const ViewCart = () => {
   const [orderDetails, setOrderDetails] = useState(null);
   const [generalError, setGeneralError] = useState("");
 
-  // Sync form with user data when authUser changes
   useEffect(() => {
     if (authUser) {
       setUser(authUser);
@@ -51,13 +50,13 @@ const ViewCart = () => {
         name: authUser.name || "",
         email: authUser.email || "",
         mobile: authUser.mobile || "",
-        address: authUser.address || "",   
-        password: "", 
+        address: authUser.address || "",
+        password: "",
       });
     }
   }, [authUser]);
 
-const handleChange = (e) => {
+  const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
     if (formErrors[name]) {
@@ -68,8 +67,7 @@ const handleChange = (e) => {
   const handleCheckboxChange = (e) => {
     setRegisterDuringCheckout(e.target.checked);
   };
-  // Validate form fields
-  // This function checks if required fields are filled and validates email and mobile formats
+
   const validateForm = () => {
     const errors = {};
     const requiredFields = ["name", "mobile", "address", "email"];
@@ -79,6 +77,7 @@ const handleChange = (e) => {
         errors[field] = "This field is required";
       }
     });
+
     if (formData.mobile && !/^\d{10}$/.test(formData.mobile)) {
       errors.mobile = "Invalid mobile number";
     }
@@ -95,51 +94,41 @@ const handleChange = (e) => {
     return Object.keys(errors).length === 0;
   };
 
-  // Calculate total price based on cart items and product prices
-const totalPrice = products.reduce((acc, product) => {
+  const totalPrice = products.reduce((acc, product) => {
     const qty = cartItems[product.id] || 0;
     return acc + product.price * qty;
   }, 0);
 
   const registerUser = async () => {
-  const response = await fetch("http://localhost:5000/api/auth/signup", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      name: formData.name,
-      email: formData.email,
-      mobile: formData.mobile,
-      password: formData.password,
-      address: formData.address,
-    }),
-  });
+    try {
+      const data = await api.auth.signup({
+        name: formData.name,
+        email: formData.email,
+        mobile: formData.mobile,
+        password: formData.password,
+        address: formData.address,
+      });
 
-  if (!response.ok) {
-    const errorText = await response.text();
-
-    if (response.status === 409) {
-      throw new Error("An account with this email or mobile already exists.");
+      if (data.token) {
+        localStorage.setItem("user", JSON.stringify(data));
+        login(data.token, {
+          id: data.id,
+          name: data.name,
+          email: data.email,
+          mobile: data.mobile,
+          address: data.address,
+        });
+        setUser(data);
+      } else {
+        throw new Error(data.error || "Registration failed");
+      }
+    } catch (err) {
+      if (err.status === 409) {
+        throw new Error("An account with this email or mobile already exists.");
+      }
+      throw new Error(err.message || "Registration failed");
     }
-
-    throw new Error(errorText || "Registration failed");
-  }
-
-  const data = await response.json();
-  if (data.token) {
-    localStorage.setItem("user", JSON.stringify(data));
-    login(data.token, {
-      id: data.id,
-      name: data.name,
-      email: data.email,
-      mobile: data.mobile,
-      address: data.address,
-    });
-    setUser(data);
-  } else {
-    throw new Error(data.error || "Registration failed");
-  }
-};
-
+  };
 
   const saveOrder = async () => {
     const items = products
@@ -149,10 +138,11 @@ const totalPrice = products.reduce((acc, product) => {
         name: product.name,
         qty: cartItems[product.id],
       }));
+
     if (items.length === 0) {
       throw new Error("No items in cart to place order");
-    } 
-    // Prepare order payload
+    }
+
     const orderPayload = {
       name: formData.name,
       email: formData.email,
@@ -164,17 +154,7 @@ const totalPrice = products.reduce((acc, product) => {
     };
 
     try {
-      const response = await fetch("http://localhost:5000/api/orders", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: user?.token ? `Bearer ${user.token}` : "",
-        },
-        body: JSON.stringify(orderPayload),
-      });
-
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.message || "Order failed");
+      const data = await api.orders.createOrder(orderPayload);
 
       setOrderPlaced(true);
       setOrderDetails({
@@ -210,10 +190,8 @@ const totalPrice = products.reduce((acc, product) => {
     }
   };
 
-  const goToDashboard = () => {
-    navigate("/dashboard");
-  };
-  // If order is placed and orderDetails are available, show success message
+  const goToDashboard = () => navigate("/dashboard");
+
   if (orderPlaced && orderDetails) {
     return (
       <Box sx={{ p: 4, textAlign: "center" }}>
@@ -223,12 +201,8 @@ const totalPrice = products.reduce((acc, product) => {
         <Typography variant="h6" gutterBottom>
           Thank you, {orderDetails.name}!
         </Typography>
-        <Typography variant="body1">
-          Order ID: {orderDetails.orderId}
-        </Typography>
-        <Typography variant="body1">
-          Total: ₹{orderDetails.total_price}
-        </Typography>
+        <Typography>Order ID: {orderDetails.orderId}</Typography>
+        <Typography>Total: ₹{orderDetails.total_price}</Typography>
 
         <Box mt={3}>
           <Typography variant="subtitle1" gutterBottom>
@@ -275,7 +249,9 @@ const totalPrice = products.reduce((acc, product) => {
               <Card className="cart-item-card">
                 <CardMedia
                   component="img"
-                  image={`http://localhost:5000${product.image}`}
+                  image={`${
+                    import.meta.env.VITE_API_BASE_URL?.replace("/api", "") || "http://localhost:5000"
+                  }${product.image}`}
                   alt={product.name}
                   height="140"
                 />
