@@ -1,24 +1,39 @@
+require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const path = require("path");
 const db = require("./db");
 
 const authRoutes = require("./routes/auth");
-const orderRoutes = require("./routes/order");  
-const authMiddleware = require("./middleware/authMiddleware"); 
+const orderRoutes = require("./routes/order");
+const authMiddleware = require("./middleware/authMiddleware");
 
 const app = express();
 
-// Middleware
+// ✅ Allowed frontend origins for different environments
+const allowedOrigins = [
+  process.env.FRONTEND_URL || "http://localhost:5173",      // local dev
+  "http://43.201.28.251:5173",                              // QA
+  "https://your-production-site.com"                        // Production (replace this)
+];
+
+// ✅ Dynamic CORS options
 const corsOptions = {
-  origin: process.env.FRONTEND_URL || "http://localhost:5173",
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
   credentials: true,
 };
+
 app.use(cors(corsOptions));
 app.use(express.json());
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
-// Log DB connection
+// ✅ Log DB connection
 db.query("SELECT NOW()", (err, result) => {
   if (err) {
     console.error("❌ DB Error:", err.message);
@@ -27,11 +42,11 @@ db.query("SELECT NOW()", (err, result) => {
   }
 });
 
-// Register routes
-app.use("/api/auth", authRoutes);    // ✅ use auth routes
-app.use("/api/orders", orderRoutes); // ✅ use order routes
+// ✅ Register routes
+app.use("/api/auth", authRoutes);
+app.use("/api/orders", orderRoutes);
 
-// Public Products route
+// ✅ Public route: Get products
 app.get("/api/products", async (req, res) => {
   try {
     const result = await db.query("SELECT * FROM products ORDER BY id");
@@ -42,7 +57,7 @@ app.get("/api/products", async (req, res) => {
   }
 });
 
-// Protected profile route
+// ✅ Protected route: User profile
 app.get("/api/profile", authMiddleware, async (req, res) => {
   try {
     const userId = req.user.id;
@@ -62,10 +77,10 @@ app.get("/api/profile", authMiddleware, async (req, res) => {
   }
 });
 
-// Test home route
-app.get("/", (req, res) => res.send("Backend server is running"));
+// ✅ Home route
+app.get("/", (req, res) => res.send("Backend server is running 🚀"));
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
+  console.log(`🔊 Server running on http://localhost:${PORT}`);
 });
